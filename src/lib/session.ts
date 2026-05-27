@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 
 const COOKIE = "fs_session";
+const AGENT_COOKIE = "fs_agent";
 const MAX_AGE = 60 * 60 * 24 * 180; // 180 days
 
 function secret(): string {
@@ -54,4 +55,26 @@ export async function getLeadId(): Promise<string | null> {
 export async function destroySession(): Promise<void> {
   const c = await cookies();
   c.delete(COOKIE);
+}
+
+export async function createAgentSession(agentId: string): Promise<void> {
+  const c = await cookies();
+  c.set(AGENT_COOKIE, sign(agentId), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: MAX_AGE,
+  });
+}
+
+export async function getAgentId(): Promise<string | null> {
+  const c = await cookies();
+  const raw = c.get(AGENT_COOKIE)?.value;
+  return raw ? unsign(raw) : null;
+}
+
+export async function destroyAgentSession(): Promise<void> {
+  const c = await cookies();
+  c.delete(AGENT_COOKIE);
 }
