@@ -97,3 +97,8 @@
 @utility ink-bleed {
   animation: ink-bleed 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+
+@utility luopan-spin {
+  animation: compass-rotate 14s linear infinite;
+  transform-origin: center;
+}
