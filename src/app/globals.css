@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f5efe6;
+  --color-bg-warm: #ede4d4;
+  --color-surface: #faf6ef;
+  --color-ink: #1c140e;
+  --color-ink-soft: #2a1f15;
+  --color-cinnabar: #8b2c1c;
+  --color-cinnabar-deep: #6e2316;
+  --color-jade: #3f5a3d;
+  --color-earth: #5b4a3a;
+  --color-muted: #7a6f5f;
+  --color-line: #d8cdb9;
+  --color-line-soft: #e6dccb;
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-cn: var(--font-cn);
+}
+
+@layer base {
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.07 0 0 0 0 0.04 0 0 0 1 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+  }
+
+  ::selection {
+    background: var(--color-cinnabar);
+    color: var(--color-bg);
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display), "Times New Roman", serif;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+}
+
+@utility font-cn {
+  font-family: var(--font-cn), "Noto Serif SC", serif;
+}
+
+@utility numeral {
+  font-family: var(--font-display), serif;
+  font-variation-settings: "opsz" 144;
+  font-feature-settings: "tnum", "lnum";
+}
+
+@keyframes rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ink-bleed {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.5em;
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: normal;
+  }
+}
+
+@keyframes compass-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@utility rise {
+  animation: rise-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@utility ink-bleed {
+  animation: ink-bleed 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
