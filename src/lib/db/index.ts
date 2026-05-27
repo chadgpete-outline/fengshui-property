@@ -39,6 +39,29 @@ export function ensureSchema(): Promise<void> {
           created_at INTEGER NOT NULL
         )
       `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS agents (
+          id TEXT PRIMARY KEY,
+          email TEXT NOT NULL UNIQUE,
+          name TEXT,
+          agency TEXT,
+          res_no TEXT,
+          territories TEXT,
+          status TEXT NOT NULL,
+          referred_by TEXT,
+          created_at INTEGER NOT NULL
+        )
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS claims (
+          id TEXT PRIMARY KEY,
+          lead_id TEXT NOT NULL UNIQUE,
+          agent_id TEXT NOT NULL,
+          tier TEXT NOT NULL,
+          price_cents INTEGER NOT NULL,
+          claimed_at INTEGER NOT NULL
+        )
+      `);
     })();
   }
   return ready;

@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 
+import { applyAgent } from "@/lib/agents";
+
 import { isValidRef } from "./refs";
 
 export async function submitApplication(formData: FormData) {
@@ -11,29 +13,28 @@ export async function submitApplication(formData: FormData) {
     redirect("/apply?error=invalid-code");
   }
 
-  const application = {
-    referredBy: ref,
-    name: formData.get("name")?.toString().trim(),
-    email: formData.get("email")?.toString().trim().toLowerCase(),
-    phone: formData.get("phone")?.toString().trim(),
-    res: formData.get("res")?.toString().trim().toUpperCase(),
-    agency: formData.get("agency")?.toString().trim(),
-    territories: formData.get("territories")?.toString().trim(),
-    note: formData.get("note")?.toString().trim(),
-    submittedAt: new Date().toISOString(),
-  };
+  const email = formData.get("email")?.toString().trim().toLowerCase() ?? "";
+  const name = formData.get("name")?.toString().trim() ?? "";
+  const phone = formData.get("phone")?.toString().trim() ?? "";
+  const res = formData.get("res")?.toString().trim().toUpperCase() ?? "";
+  const agency = formData.get("agency")?.toString().trim() ?? "";
+  const territories = formData.get("territories")?.toString().trim() ?? "";
 
-  if (
-    !application.name ||
-    !application.email ||
-    !application.phone ||
-    !application.res ||
-    !application.agency
-  ) {
+  if (!name || !email || !phone || !res || !agency) {
     redirect(`/apply?ref=${ref}&error=missing-fields`);
   }
 
-  console.log("[PARTNER APPLICATION]", application);
+  // An invite code is our vetting gate, so applications through it are approved.
+  // RES verification against the CEA directory is a manual follow-up.
+  await applyAgent({
+    email,
+    name,
+    agency,
+    resNo: res,
+    territories,
+    referredBy: ref,
+    approved: true,
+  });
 
   redirect("/apply?submitted=1");
 }

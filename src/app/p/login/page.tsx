@@ -1,4 +1,11 @@
-export default function LoginPage() {
+import { agentLogin } from "./actions";
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   return (
     <main className="flex-1 px-6 sm:px-10 py-20 sm:py-28">
       <div className="mx-auto max-w-md">
@@ -6,13 +13,28 @@ export default function LoginPage() {
           Sign in · 签到
         </div>
         <h1 className="font-display text-4xl sm:text-5xl leading-[0.95] tracking-[-0.02em] mb-6">
-          Magic link <em className="text-cinnabar italic font-normal">only.</em>
+          Welcome <em className="text-cinnabar italic font-normal">back.</em>
         </h1>
-        <p className="text-bg/75 leading-relaxed mb-10 text-sm">
-          We don&rsquo;t use passwords. Enter the email tied to your account
-          and we&rsquo;ll send a one-time link to sign in.
+        <p className="text-bg/75 leading-relaxed mb-8 text-sm">
+          Enter the email tied to your approved partner account.
         </p>
-        <form className="space-y-8">
+
+        {error === "notfound" && (
+          <div className="border border-cinnabar bg-cinnabar/10 px-5 py-3 mb-6 text-sm">
+            No approved account for that email. Did you{" "}
+            <a href="/apply" className="text-cinnabar underline">
+              apply
+            </a>{" "}
+            with your invite code?
+          </div>
+        )}
+        {error === "email" && (
+          <div className="border border-cinnabar bg-cinnabar/10 px-5 py-3 mb-6 text-sm">
+            That email looks incomplete.
+          </div>
+        )}
+
+        <form action={agentLogin} className="space-y-8">
           <label className="block">
             <div className="text-[10px] tracking-[0.3em] uppercase text-bg/60 mb-2">
               Agency email
@@ -27,16 +49,18 @@ export default function LoginPage() {
           </label>
           <button
             type="submit"
-            disabled
-            className="font-display text-xl text-cinnabar/50 inline-flex items-center gap-2 cursor-not-allowed"
-            title="Magic-link sender connects in next build"
+            className="font-display text-xl text-cinnabar inline-flex items-center gap-2 hover:translate-x-1 transition-transform"
           >
-            Send magic link <span aria-hidden>→</span>
+            Enter the dashboard <span aria-hidden>→</span>
           </button>
         </form>
+
         <p className="text-[10px] tracking-wide text-bg/40 mt-12">
-          New here? <a href="/apply" className="text-cinnabar">Apply for access</a> ·
-          The dashboard opens once your RES number is verified.
+          New here?{" "}
+          <a href="/apply" className="text-cinnabar">
+            Apply for access
+          </a>{" "}
+          · approved once your RES number is verified.
         </p>
       </div>
     </main>
