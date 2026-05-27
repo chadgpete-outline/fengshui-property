@@ -25,7 +25,55 @@ type RawRevGeocodeAddress = {
   YCOORD?: string;
 };
 
-function getToken(): string | null {
+// OneMap access tokens expire (~3 days), so a static env token dies in prod.
+// When ONEMAP_EMAIL + ONEMAP_PASSWORD are set we fetch and cache a token,
+// refreshing it before expiry. Otherwise we fall back to a static ONEMAP_TOKEN
+// (fine for local dev).
+let cachedToken: { token: string; expiresAt: number } | null = null;
+let inflight: Promise<string | null> | null = null;
+
+async function fetchToken(): Promise<string | null> {
+  const email = process.env.ONEMAP_EMAIL?.trim();
+  const password = process.env.ONEMAP_PASSWORD;
+  if (!email || !password) return null;
+  try {
+    const res = await fetch(`${ONEMAP_BASE}/api/auth/post/getToken`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      access_token?: string;
+      expiry_timestamp?: string | number;
+    };
+    const token = data.access_token;
+    if (!token) return null;
+    const expSec = Number(data.expiry_timestamp);
+    const expiresAt = Number.isFinite(expSec)
+      ? expSec * 1000
+      : Date.now() + 3 * 24 * 60 * 60 * 1000;
+    cachedToken = { token, expiresAt };
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+async function getToken(): Promise<string | null> {
+  if (process.env.ONEMAP_EMAIL && process.env.ONEMAP_PASSWORD) {
+    // Refresh a minute before expiry; de-dupe concurrent refreshes.
+    if (cachedToken && Date.now() < cachedToken.expiresAt - 60_000) {
+      return cachedToken.token;
+    }
+    inflight ??= fetchToken().finally(() => {
+      inflight = null;
+    });
+    const token = await inflight;
+    if (token) return token;
+    // Fall through to a static token if the credential fetch failed.
+  }
   return process.env.ONEMAP_TOKEN?.trim() || null;
 }
 
@@ -44,7 +92,7 @@ export async function reverseGeocode(
   coords: Coords,
   bufferMeters = 80,
 ): Promise<OneMapRevGeocodeResult | null> {
-  const token = getToken();
+  const token = await getToken();
   if (!token) return null;
 
   const url = new URL(`${ONEMAP_BASE}/api/public/revgeocode`);
@@ -126,7 +174,7 @@ export async function searchAddress(
   const q = query.trim();
   if (q.length < 2) return [];
 
-  const token = getToken();
+  const token = await getToken();
   const url = new URL(`${ONEMAP_BASE}/api/common/elastic/search`);
   url.searchParams.set("searchVal", q);
   url.searchParams.set("returnGeom", "Y");
