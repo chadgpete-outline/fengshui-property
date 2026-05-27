@@ -2,10 +2,14 @@
 
 import { useRef, useState } from "react";
 
-import type {
-  FloorPlanAnalysis,
-  FloorPlanFactor,
-} from "@/lib/types";
+import { FlyingStarsGrid } from "@/components/flying-stars-grid";
+import { LuopanCasting } from "@/components/luopan-casting";
+import {
+  computeFlyingStars,
+  type Dir8,
+  type FlyingStarChart,
+} from "@/lib/fengshui/flying-stars";
+import type { FloorPlanAnalysis, FloorPlanFactor } from "@/lib/types";
 
 import { analyzeFloorPlan } from "./actions";
 
@@ -277,10 +281,23 @@ export function UploadClient({
 
           {/* Right: report */}
           <section className="lg:border-l lg:border-line lg:pl-14">
-            {status === "done" && analysis ? (
-              <Report analysis={analysis} onReset={reset} />
+            {status === "analyzing" ? (
+              <LuopanCasting />
+            ) : status === "done" && analysis ? (
+              <Report
+                analysis={analysis}
+                chart={
+                  facing
+                    ? computeFlyingStars(
+                        facing as Dir8,
+                        year ? Number(year) : undefined,
+                      )
+                    : null
+                }
+                onReset={reset}
+              />
             ) : (
-              <ReportPlaceholder analyzing={status === "analyzing"} />
+              <ReportPlaceholder />
             )}
           </section>
         </div>
@@ -289,42 +306,27 @@ export function UploadClient({
   );
 }
 
-function ReportPlaceholder({ analyzing }: { analyzing: boolean }) {
+function ReportPlaceholder() {
   return (
     <div className="h-full flex flex-col justify-center py-12">
       <div className="text-[10px] tracking-[0.35em] uppercase text-muted mb-3">
-        {analyzing ? "Reading…" : "The reading"}
+        The reading
       </div>
-      {analyzing ? (
-        <>
-          <h2 className="font-display text-3xl tracking-[-0.02em] mb-6">
-            Overlaying the nine-grid.
-          </h2>
-          <div className="space-y-2 max-w-xs">
-            {["80%", "62%", "70%", "55%"].map((w, i) => (
-              <div
-                key={i}
-                className="h-3 bg-line-soft animate-pulse"
-                style={{ width: w, animationDuration: "1.6s" }}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <p className="font-display text-2xl leading-snug text-muted max-w-sm">
-          Your unit&rsquo;s reading will appear here once you upload a plan and
-          set its facing.
-        </p>
-      )}
+      <p className="font-display text-2xl leading-snug text-muted max-w-sm">
+        Your unit&rsquo;s reading will appear here once you upload a plan and
+        set its facing.
+      </p>
     </div>
   );
 }
 
 function Report({
   analysis,
+  chart,
   onReset,
 }: {
   analysis: FloorPlanAnalysis;
+  chart: FlyingStarChart | null;
   onReset: () => void;
 }) {
   const positives = analysis.factors.filter((f) => f.type === "positive");
@@ -347,6 +349,22 @@ function Report({
           <p className="mt-4 text-ink-soft leading-relaxed">{analysis.summary}</p>
         )}
       </div>
+
+      {chart && (
+        <section>
+          <SectionHead
+            n=""
+            title={`Flying stars · Period ${chart.period}`}
+            cn="玄空飞星"
+          />
+          <FlyingStarsGrid chart={chart} />
+          <p className="text-xs text-muted leading-relaxed mt-3">
+            Computed from your {analysis.facing} facing — the deterministic natal
+            chart (下卦). Mountain stars govern health and relationships; water
+            stars govern wealth.
+          </p>
+        </section>
+      )}
 
       {analysis.rooms.length > 0 && (
         <section>
